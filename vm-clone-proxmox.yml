@@ -1,0 +1,12 @@
+tasks:
+  - name: Clone Ubuntu VMs for Kubernetes
+    community.proxmox.proxmox_kvm:
+      node: pve                     # The hostname of your Proxmox server
+      api_url: "{{ proxmox_api_url }}"
+      api_token_id: "{{ proxmox_api_token_id }}"
+      api_token_secret: "{{ proxmox_api_token_secret }}"
+      clone: "ubuntu-template"      # Assuming you have a template with this name
+      name: "{{ item.name }}"
+      vmid: "{{ item.vmid }}"
+      ipconfig: "ip={{ item.ip }}/24,gw=10.0.10.1"
+    loop: "{{ k8s_nodes }}"

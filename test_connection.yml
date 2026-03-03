@@ -1,0 +1,5 @@
+- name: ping host test
+  hosts: control_nodes
+  tasks:
+    - name: ping host
+      ping:

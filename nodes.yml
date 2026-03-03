@@ -1,0 +1,11 @@
+vars:
+  k8s_nodes:
+    - name: k8s-control
+      vmid: 900
+      ip: 10.0.20.11
+    - name: k8s-worker01
+      vmid: 901
+      ip: 10.0.10.11
+    - name: k8s-worker02
+      vmid: 902
+      ip: 10.0.10.12

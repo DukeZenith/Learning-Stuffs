@@ -1,0 +1,58 @@
+- name: install and configure helm
+  hosts: control_nodes
+  become: true
+  tasks:
+    - name: install helm on control_nodes
+      ansible.builtin.shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    - name: add helm repo to ansible
+      kubernetes.core.helm_repository:
+        name: kubernetes-dashboard
+        repo_url: "https://kubernetes.github.io/dashboard/"
+    - name: install helm chart
+      kubernetes.core.helm:
+        name: k8s-dashboard
+        chart_ref: kubernetes-dashboard/kubernetes-dashboard
+        release_namespace: kubernetes-dashboard
+        create_namespace: true
+        values:
+          service:
+            type: NodePort
+      environment:
+        K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+    - name: Create admin-user
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: admin-user
+            namespace: kubernetes-dashboard
+        environment:
+          K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+    - name: Create ClusterRoleBinding for Admin User
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: admin-user-binding
+          subjects:
+            - kind: ServiceAccount
+              name: admin-user
+              namespace: kubernetes-dashboard
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: cluster-admin
+        environment:
+          K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+    - name: generate dashboard_token token
+      ansible.builtin.shell: kubectl create token admin-user -n kubernetes-dashboard
+      register: dashboard_token
+      environment:
+        K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+    - name: print dashboard_token
+      ansible.builtin.debug:
+        msg: "{{ dashboard_token.stdout }}"
