@@ -1,0 +1,22 @@
+- name: Install ArgoCD
+  hosts: control_nodes
+  become: true
+  vars:
+    kubeconfig_path: "/etc/rancher/k3s/k3s.yaml"
+  tasks:
+    - name: Add argocd to repo
+      kubernetes.core.helm_repository:
+        name: argocd
+        repo_url: "https://argoproj.github.io/argo-helm"
+    - name: Install ArgoCD
+      kubernetes.core.helm:
+        name: argocd
+        chart_ref: argocd/argo-cd
+        release_namespace: argocd
+        create_namespace: true
+        values:
+          server:
+            service:
+              type: LoadBalancer
+      environment:
+        K8S_AUTH_KUBECONFIG: "{{ kubeconfig_path }}"
